@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from collections import defaultdict
+from sklearn.manifold import TSNE
 
 def measure(matrix,labels):
     n = len(labels)
@@ -75,7 +76,7 @@ for i, (samples, labels) in enumerate(test_data_loader):
         labelsV_act = Variable(labels_act)
         labelsV_loc = Variable(labels_loc)
 
-        predict_label_act, predict_label_loc,_,_,_,_,_,_,_ = aplnet(samplesV)
+        predict_label_act, predict_label_loc,_,_,_,_,_,feature_act,feature_loc = aplnet(samplesV)
         prediction = predict_label_act.data.max(1)[1]
 
         correct_test_act += prediction.eq(labelsV_act.data.long()).sum()
@@ -94,6 +95,15 @@ for i, (samples, labels) in enumerate(test_data_loader):
 
 print(loc_matrix)
 print(act_matrix)
+
+print(feature_loc.size())
+print(feature_act.size())
+
+feature_loc = torch.flatten(feature_loc,start_dim=1)
+feature_act = torch.flatten(feature_act,start_dim=1)
+
+# print(feature_loc.size())
+# print(feature_act.size())
 
 
 y_true = np.array(['Positive', 'Negative', 'Positive', 'Positive', 'Negative'])
@@ -166,6 +176,40 @@ plt.grid()
 # 显示混淆矩阵
 plt.show()
 
+# T-SNE 画图
+
+
+plt.figure(num=5)
+tsne = TSNE(n_components=2, random_state=33)
+
+# 进行降维
+X_tsne = tsne.fit_transform(feature_loc)
+
+# print(len(X_tsne))
+# print(labels_act)
+# 可视化降维结果
+plt.scatter(X_tsne[:, 0], X_tsne[:, 1],c=labels_loc[:])
+plt.title('t-SNE Results of Location Features')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
+
+
+
+plt.figure(num=6)
+tsne = TSNE(n_components=2, random_state=21)
+
+# 进行降维
+X_tsne = tsne.fit_transform(feature_act)
+
+# print(len(X_tsne))
+# print(labels_act)
+# 可视化降维结果
+plt.scatter(X_tsne[:, 0], X_tsne[:, 1],c=labels_act[:])
+plt.title('t-SNE Results of Activity Features')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
 # 存储数据
 dic = {'act_matrix':act_matrix,'loc_matrix':loc_matrix}
 sio.savemat('conmatrix_awl_94_97.mat',dic)
