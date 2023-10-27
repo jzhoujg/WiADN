@@ -210,6 +210,54 @@ plt.title('t-SNE Results of Activity Features')
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.show()
+
+plt.figure(num=7)
+loss = sio.loadmat('loss.mat')
+
+epochs = [i+1 for i in range(200)]
+ref = [1 for _ in range(200)]
+awl_p = loss['awl_p'][0]
+awl_p = np.insert(awl_p,0,1)
+plt.rcParams['font.size'] = 14
+# sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
+# sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
+# 设置图形属性
+plt.plot(epochs[:150],awl_p[:150],color='r',label='adaptive weight ratio')
+plt.plot(epochs[:150],ref[:150],color='b',linestyle='--',label='reference')
+plt.title('')
+plt.xlabel('epochs')
+plt.ylabel('weight 1 / weight 2')
+plt.grid()
+plt.legend(loc='upper right')
+plt.ylim(0.8,1.5)
+plt.show()
+
+# print(loss)
+#
+
+
+plt.figure(num=8)
+loss = sio.loadmat('loss.mat')
+
+epochs = [i+1 for i in range(199)]
+ref = [1 for _ in range(199)]
+loss_act_train = loss['loss_act_train'][0]
+loss_loc_train = loss['loss_loc_train'][0]
+plt.rcParams['font.size'] = 14
+# sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
+# sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
+# 设置图形属性
+plt.plot(epochs[:150],loss_act_train[:150],color='r',label='Location Recognition')
+plt.plot(epochs[:150],loss_loc_train[:150],color='b',label='Activity Recognition')
+plt.title('')
+plt.xlabel('epochs')
+plt.ylabel('train loss')
+plt.grid()
+plt.legend(loc='upper right')
+# plt.ylim(0.8,1.5)
+plt.show()
+
+
 # 存储数据
 dic = {'act_matrix':act_matrix,'loc_matrix':loc_matrix}
 sio.savemat('conmatrix_awl_94_97.mat',dic)
