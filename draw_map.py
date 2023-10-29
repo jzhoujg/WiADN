@@ -15,6 +15,7 @@ def measure(matrix,labels):
     dic = defaultdict(list) # [TP TN FP FN]
     total = sum(sum(matrix))
 
+    trace = np.trace(matrix)
     for i in range(n):
         TP = matrix[i][i]
         FP = sum(matrix[i]) - TP
@@ -28,9 +29,6 @@ def measure(matrix,labels):
         dic['false_reject_rate'].append(100*round(FN/(FN+TP),3))
 
     return dic
-
-
-
 
 
 batch_size = 512
@@ -257,6 +255,66 @@ plt.legend(loc='upper right')
 # plt.ylim(0.8,1.5)
 plt.show()
 
+
+
+# 比较ARIL
+
+ARIL_dic = sio.loadmat('ARIL_matrix.mat')
+print(act_matrix-ARIL_dic['act_matrix'])
+print(loc_matrix-ARIL_dic['loc_matrix'])
+
+
+
+gain_m_act = act_matrix-ARIL_dic['act_matrix']
+gain_m_loc = loc_matrix-ARIL_dic['loc_matrix']
+act_gain = []
+loc_gain = []
+
+for i in range(6):
+    act_gain.append(round(gain_m_act[i][i]/46,2))
+
+for i in range(16):
+    loc_gain.append(round(gain_m_loc[i][i] / 18, 2))
+act_gain[1] = 0.001
+
+plt.figure(num=9)
+colors = ['blue', 'orange', 'orange', 'orange', 'orange','orange']
+plt.bar(labels_a,act_gain,color=colors)
+plt.xlabel('Categories of Activities')
+plt.ylabel('Performance Change')
+for i, value in enumerate(act_gain):
+    if i==0:
+        plt.text(i, value, str(value), ha='center', va='top')
+    elif i==1:
+        plt.text(i, 0, str(0), ha='center', va='bottom')
+    else:
+        plt.text(i, value, str(value), ha='center', va='bottom')
+
+plt.show()
+
+
+plt.figure(num=10)
+colors = []
+for i in range(len(loc_gain)):
+    if loc_gain[i]==0:
+        loc_gain[i]=0.001
+    if loc_gain[i]<0:
+        colors.append('blue')
+    else:
+        colors.append('orange')
+
+plt.bar(labels_l,loc_gain,color=colors)
+plt.xlabel('Categories of Locations')
+plt.ylabel('Performance Change')
+for i, value in enumerate(loc_gain):
+    if value==0.001:
+        plt.text(i, 0, str(0), ha='center', va='bottom')
+    elif value<0:
+        plt.text(i, value, str(value), ha='center', va='top')
+    else:
+        plt.text(i, value, str(value), ha='center', va='bottom')
+
+plt.show()
 
 # 存储数据
 dic = {'act_matrix':act_matrix,'loc_matrix':loc_matrix}
