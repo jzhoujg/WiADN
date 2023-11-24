@@ -1,0 +1,5 @@
+train_setting:
+    awl_lr: 0.01
+    batch_size : 32
+    num_epochs : 200
+    order : 1
