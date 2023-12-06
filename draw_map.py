@@ -19,7 +19,7 @@ def measure(matrix,labels):
     for i in range(n):
         TP = matrix[i][i]
         FP = sum(matrix[i]) - TP
-        FN = sum(matrix[:][i]) - TP
+        FN = matrix.sum(axis=0)[i] - TP
         TN = total - TP - FP - FN
         # print(TP,FP,FN,TN,total)
         dic['accuracy'].append(100*round((TP+TN)/total,3))
@@ -54,13 +54,12 @@ test_dataset = TensorDataset(test_data, test_label)
 test_data_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
 aplnet = ResNet(block=BasicBlock, layers=[1, 1, 1, 1], inchannel=52)
-state_dict=torch.load('results_weight/awl_84.pth')
+state_dict=torch.load('results_weight/best_model_awllr0.01_batchsize_32_order_17_96.40_98.56.pth')
 aplnet.load_state_dict(state_dict)
 aplnet = aplnet.eval()
 
 correct_test_loc = 0
 correct_test_act = 0
-
 
 act_matrix = np.zeros((6,6),dtype=int)
 loc_matrix = np.zeros((16,16),dtype=int)
@@ -103,22 +102,17 @@ feature_act = torch.flatten(feature_act,start_dim=1)
 # print(feature_loc.size())
 # print(feature_act.size())
 
-
-y_true = np.array(['Positive', 'Negative', 'Positive', 'Positive', 'Negative'])
-y_pred = np.array(['Positive', 'Positive', 'Negative', 'Positive', 'Negative'])
-
-# 创建混淆矩阵
-cm = confusion_matrix(y_true, y_pred)
-
 # 定义类别标签
 labels_l = ["#"+str(i) for i in range(16)]
 labels_a = ['up','down','left','right','circle','cross']
 
 # 创建热力图
-plt.figure(num =1)
+
+
+plt.figure(num =1,figsize=(11,9))
 plt.rcParams['font.size'] = 14
 # sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
-sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_l, yticklabels=labels_l)
+sns.heatmap(loc_matrix/loc_matrix.sum(axis=1), annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_l, yticklabels=labels_l)
 # 设置图形属性
 plt.title('Confusion Matrix')
 plt.xlabel('Predicted')
@@ -127,9 +121,9 @@ plt.ylabel('True')
 plt.show()
 
 
-plt.figure(num =2)
+plt.figure(num =2,figsize=(11,9))
 plt.rcParams['font.size'] = 14
-sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
+sns.heatmap(act_matrix/act_matrix.sum(axis=1), annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
 # sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
 # 设置图形属性
 plt.title('Confusion Matrix')
@@ -145,32 +139,38 @@ dic_a = measure(matrix=act_matrix,labels=labels_a)
 print(dic_a)
 print(dic_l)
 
-plt.figure(num =3)
+plt.figure(num =3,figsize=(8,6))
 plt.rcParams['font.size'] = 14
 # sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
 # sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
 # 设置图形属性
-plt.plot(labels_a,dic_a['accuracy'],marker='o',color='r')
-plt.title('Accuracy of Activities')
+plt.plot(labels_a,dic_a['accuracy'],marker='o',color='r',linewidth=2,label='ACC')
+plt.plot(labels_a,dic_a['precision'],marker='+',color='b',linewidth=2,linestyle="--",label='PRE')
+plt.plot(labels_a,dic_a['recall'],marker='*',color='orange',linewidth=2,linestyle="-.",label='REC')
+plt.title('Accuracy, Precision and Recall of Activities')
 plt.xlabel('Class')
-plt.ylabel('Accuracy(%)')
-plt.ylim(90,100)
-plt.grid()
+plt.legend()
+plt.ylabel('Value(%)')
+# plt.ylim(90,100)
+# plt.grid()
 # 显示混淆矩阵
 plt.show()
-plt.figure(num=4)
+plt.figure(num=4,figsize=(8,6))
 plt.rcParams['font.size'] = 14
 # sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
 # sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
 # 设置图形属性
-plt.plot(labels_l,dic_l['accuracy'],marker='o',color='r')
-plt.title('Accuracy of Locations')
+plt.plot(labels_l,dic_l['accuracy'],marker='o',color='r',linewidth=2,linestyle="-",label='ACC')
+plt.plot(labels_l,dic_l['precision'],marker='+',color='b',linewidth=2,linestyle="--",label='PRE')
+plt.plot(labels_l,dic_l['recall'],marker='*',color='orange',linewidth=2,linestyle="-.",label='REC')
+plt.title('Accuracy, Precision and Recall of Locations')
 plt.xlabel('Class')
-plt.ylabel('Accuracy(%)')
-plt.ylim(95,100.5)
+plt.ylabel('value(%)')
+plt.legend()
+# plt.ylim(95,100.5)
 
 
-plt.grid()
+# plt.grid()
 # 显示混淆矩阵
 plt.show()
 
@@ -179,35 +179,40 @@ plt.show()
 
 plt.figure(num=5)
 tsne = TSNE(n_components=2, random_state=33)
-
 # 进行降维
-X_tsne = tsne.fit_transform(feature_loc)
-
+X_tsne_loc = tsne.fit_transform(feature_loc)
+tsne = TSNE(n_components=2, random_state=21)
+# 进行降维
+X_tsne_act = tsne.fit_transform(feature_act)
 # print(len(X_tsne))
 # print(labels_act)
 # 可视化降维结果
-plt.scatter(X_tsne[:, 0], X_tsne[:, 1],c=labels_loc[:])
+plt.subplot(1,2,1)
+plt.scatter(X_tsne_loc[:, 0], X_tsne_loc[:, 1],c=labels_loc[:],s=7)
 plt.title('t-SNE Results of Location Features')
+
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.show()
+plt.subplot(1,2,2)
+plt.scatter(X_tsne_act[:, 0], X_tsne_act[:, 1],c=labels_act[:],s=7)
 
-
-
-plt.figure(num=6)
-tsne = TSNE(n_components=2, random_state=21)
-
-# 进行降维
-X_tsne = tsne.fit_transform(feature_act)
-
-# print(len(X_tsne))
-# print(labels_act)
-# 可视化降维结果
-plt.scatter(X_tsne[:, 0], X_tsne[:, 1],c=labels_act[:])
 plt.title('t-SNE Results of Activity Features')
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.show()
+
+
+
+
+
+# print(len(X_tsne))
+# print(labels_act)
+# 可视化降维结果
+
+
+# plt.xlabel('X')
+# plt.ylabel('Y')
+# plt.show()
 
 plt.figure(num=7)
 loss = sio.loadmat('loss.mat')
@@ -245,8 +250,8 @@ plt.rcParams['font.size'] = 14
 # sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
 # sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
 # 设置图形属性
-plt.plot(epochs[:150],loss_act_train[:150],color='r',label='Location Recognition')
-plt.plot(epochs[:150],loss_loc_train[:150],color='b',label='Activity Recognition')
+plt.plot(epochs[:150],loss_act_train[:150],color='r',label=' Activity Recognition')
+plt.plot(epochs[:150],loss_loc_train[:150],color='b',label=' Location Recognition')
 plt.title('')
 plt.xlabel('epochs')
 plt.ylabel('train loss')
@@ -278,15 +283,19 @@ for i in range(16):
 act_gain[1] = 0.001
 
 plt.figure(num=9)
-colors = ['blue', 'orange', 'orange', 'orange', 'orange','orange']
+colors = ['coral', 'coral', 'coral', 'coral', 'coral','coral']
 plt.bar(labels_a,act_gain,color=colors)
 plt.xlabel('Categories of Activities')
 plt.ylabel('Performance Change')
+
+
+
+
+
+
 for i, value in enumerate(act_gain):
-    if i==0:
-        plt.text(i, value, str(value), ha='center', va='top')
-    elif i==1:
-        plt.text(i, 0, str(0), ha='center', va='bottom')
+    if value == 0.001:
+        plt.text(i, value, str(0), ha='center', va='bottom')
     else:
         plt.text(i, value, str(value), ha='center', va='bottom')
 
@@ -299,9 +308,9 @@ for i in range(len(loc_gain)):
     if loc_gain[i]==0:
         loc_gain[i]=0.001
     if loc_gain[i]<0:
-        colors.append('blue')
+        colors.append('cornflowerblue')
     else:
-        colors.append('orange')
+        colors.append('coral')
 
 plt.bar(labels_l,loc_gain,color=colors)
 plt.xlabel('Categories of Locations')
@@ -316,6 +325,31 @@ for i, value in enumerate(loc_gain):
 
 plt.show()
 
+
+plt.figure(num=11)
+
+wiaman_act = [83.33,82.33,81.67,89.17,88.33]
+wiaman_loc = [98.33,98.03,95.83,96.67,97.50]
+ARIL_act = [81.67,77.5,86.7,85.83,80]
+ARIL_loc = [97.5,96.5,95,97.5,98.87]
+
+
+plt.rcParams['font.size'] = 14
+# sns.heatmap(act_matrix/46, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels_a, yticklabels=labels_a)
+# sns.heatmap(loc_matrix/18, annot=True, fmt='.2f', cmap='Blues', xticklabels=labels, yticklabels=labels)
+# 设置图形属性
+plt.boxplot([wiaman_act,ARIL_act,wiaman_loc,ARIL_loc],medianprops={'color': 'red', 'linewidth': '1.5'},
+            meanline=True,
+            showmeans=True,
+            meanprops={'color': 'blue', 'ls': '--', 'linewidth': '1.5'},
+            flierprops={"marker": "o", "markerfacecolor": "red", "markersize": 10},
+            labels=['Wi-AMAN(act)','ARIL(act)','Wi-AMAN(loc)','ARIL(loc)'])
+
+plt.title('')
+plt.grid()
+
+# plt.ylim(0.8,1.5)
+plt.show()
 # 存储数据
 dic = {'act_matrix':act_matrix,'loc_matrix':loc_matrix}
 sio.savemat('conmatrix_awl_94_97.mat',dic)
