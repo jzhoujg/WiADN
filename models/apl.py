@@ -16,6 +16,7 @@ def conv1x1(in_planes, out_planes, stride=1):
     return nn.Conv1d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -70,8 +71,6 @@ class MaskGenerator(nn.Module):
             nn.BatchNorm1d(self.total_channel),
             nn.Sigmoid()
         )
-
-
 
     def forward(self, input_basic, input_last_att):
 
@@ -164,10 +163,10 @@ class AttentionModule(nn.Module):
 #         return out
 
 
-class ResNet(nn.Module):
+class AMAN(nn.Module):
 
-    def __init__(self, block, layers,  inchannel=52, activity_num=7, location_num=6):
-        super(ResNet, self).__init__()
+    def __init__(self, block, layers,  inchannel=52, activity_num=6, location_num=16):
+        super(AMAN, self).__init__()
         self.inplanes = 128
         self.conv1 = nn.Conv1d(inchannel, 128, kernel_size=7, stride=2, padding=3,
                                  bias=False)
@@ -306,6 +305,7 @@ class ResNet(nn.Module):
 
 
         return act1, loc1, x, c1, c2, c3, c4, act, loc
+        # return loc1, act1, x, c1, c2, c3, c4, act, loc
 
 
 if __name__ == '__main__':
@@ -322,6 +322,7 @@ if __name__ == '__main__':
     data[0,:,:] = train_data[0,:,:]
     aplnet = ResNet(block=BasicBlock, layers=[1, 1, 1, 1], inchannel=52)
     out = aplnet(data)
+    print(out[-1].size(),out[-2].size())
 
 
 

@@ -1,16 +1,15 @@
-# Wi-AMAN: Asymmetrical Multi-task Attention Network for WiFi Sensing
+## WiADN: Asymmetrical Dual-Task AttentionNetwork for WiFi Sensing
+
+This repo is the code for paper "WiADN: Asymmetrical Dual-Task AttentionNetwork for WiFi Sensing".
 
 ---
 
-This repository is for paper Wi-AMAN.
 
----
 
-This work is implemented with Pytorch. If you have any problems, please contact me.
-
----
-
-# Updating...
+You can run code directly as:
 
 
 
+
+
+`python train.py --epochs==20 --awl_lr=0.05 --batch_size=32`
