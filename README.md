@@ -1,6 +1,10 @@
 ## WiADN: Asymmetrical Dual-Task AttentionNetwork for WiFi Sensing
 
-This repo is the code for paper "WiADN: Asymmetrical Dual-Task AttentionNetwork for WiFi Sensing"
+This repo is the code for paper "WiADN: Asymmetrical Dual-Task AttentionNetwork for WiFi Sensing".
+
+You can find more details at [ieee iot](https://ieeexplore.ieee.org/document/10679254).
+
+Database and the major baseline is contributed by [baseline](https://ieeexplore.ieee.org/document/8740950).
 
 1| Abstract 
 
